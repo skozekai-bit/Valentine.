@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechanical Music Box</title>
+    <style>
+        :root {
+            --bg-color: #e2eadd; 
+            --accent: #b8c9a9;
+            --accent-dark: #8da37e;
+            --trim-color: #ffffff; 
+            --text-color: #7a8a71;
+            --case-color: #f9fbf7;
+            --window-header: #b8c9a9;
+        }
+
+        body {
+            font-family: "Courier New", Courier, monospace;
+            background-color: var(--bg-color);
+            /* Dotted background pattern like in some Carrd references */
+            background-image: radial-gradient(#cbd8c3 1px, transparent 1px);
+            background-size: 20px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* --- DECORATIVE CHIBI ELEMENTS --- */
+        .chibi-char {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: -1;
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        /* Bunny characters inspired by reference 4 */
+        #char-1 { bottom: 10%; left: 10%; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="70" r="25" fill="%23f9fbf7" stroke="%238da37e" stroke-width="2"/><circle cx="35" cy="40" r="10" fill="%23f9fbf7" stroke="%238da37e" stroke-width="2"/><circle cx="65" cy="40" r="10" fill="%23f9fbf7" stroke="%238da37e" stroke-width="2"/><circle cx="45" cy="65" r="1" fill="%238da37e"/><circle cx="55" cy="65" r="1" fill="%238da37e"/><path d="M48 70 Q50 72 52 70" fill="none" stroke="%238da37e" stroke-width="1"/></svg>'); }
+        #char-2 { top: 15%; right: 12%; transform: rotate(10deg); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="70" r="25" fill="%23f9fbf7" stroke="%238da37e" stroke-width="2"/><circle cx="35" cy="40" r="10" fill="%23f9fbf7" stroke="%238da37e" stroke-width="2"/><circle cx="65" cy="40" r="10" fill="%23f9fbf7" stroke="%238da37e" stroke-width="2"/><path d="M40 65 L44 65 M56 65 L60 65" stroke="%238da37e" stroke-width="2"/></svg>'); }
+
+        /* Grass patches from references 1 and 3 */
+        .grass-patch {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M0 20 Q5 0 10 20 Q15 5 20 20 Q25 0 30 20 Q35 5 40 20 Q45 0 50 20 Q55 5 60 20 Q65 0 70 20 Q75 5 80 20 Q85 0 90 20 Q95 5 100 20" fill="%23b8c9a9"/></svg>');
+            background-repeat: repeat-x;
+            z-index: -2;
+            opacity: 0.5;
+        }
+
+        /* --- THE PLAYER CASE --- */
+        #player-container {
+            width: 340px;
+            background: var(--case-color);
+            border-radius: 12px;
+            box-shadow: 8px 8px 0px rgba(141, 163, 126, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 0 30px 0; 
+            position: relative;
+            border: 2px solid var(--accent-dark);
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .window-top {
+            width: 100%;
+            height: 32px;
+            background: var(--window-header);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-dark);
+        }
+
+        .window-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            margin-left: 12px;
+            text-transform: lowercase;
+        }
+
+        .window-dots {
+            margin-right: 12px;
+            color: white;
+            letter-spacing: 3px;
+            font-size: 12px;
+        }
+
+        #photo-frame {
+            width: 280px;
+            height: 180px;
+            background: #fff;
+            margin-top: 25px;
+            border: 2px dashed var(--accent);
+            overflow: hidden;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        #image-display {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
+            background-image: repeating-linear-gradient(45deg, #f3f7f1 0, #f3f7f1 2px, transparent 0, transparent 50%);
+            background-size: 8px 8px;
+        }
+
+        #waveform {
+            width: 80%;
+            height: 14px;
+            background: #eef3eb;
+            margin-top: 25px;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 1.5px solid var(--accent);
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--accent-dark);
+            transition: width 0.1s linear;
+        }
+
+        #crank-area {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            margin-top: 25px;
+            touch-action: none;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px dashed var(--accent);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.02);
+        }
+
+        #handle {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-origin: center;
+            cursor: grab;
+        }
+
+        .handle-visual {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 55px;
+            height: 10px;
+            background: var(--accent);
+            transform: translateY(-50%);
+            border-radius: 20px;
+        }
+
+        .knob-visual {
+            position: absolute;
+            right: -10px;
+            top: -15px;
+            width: 35px;
+            height: 35px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid var(--accent-dark);
+            box-shadow: 4px 4px 0px var(--accent);
+        }
+
+        .instruction {
+            font-size: 10px;
+            color: var(--accent-dark);
+            margin-top: 20px;
+            font-weight: bold;
+            text-transform: lowercase;
+            letter-spacing: 1px;
+            background: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+        #creator-panel {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid var(--accent-dark);
+            box-shadow: 10px 10px 0px rgba(141, 163, 126, 0.3);
+            width: 280px;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 9px; font-weight: bold; margin-bottom: 5px; color: var(--accent-dark); text-transform: uppercase; }
+        input { width: 100%; font-size: 11px; border: 1px solid #e0eadd; padding: 8px; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background: var(--accent-dark); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-family: inherit; font-size: 12px; }
+        
+        .carrd-tag {
+            font-size: 9px;
+            margin-top: 20px;
+            opacity: 0.6;
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="char-1" class="chibi-char"></div>
+    <div id="char-2" class="chibi-char"></div>
+    <div class="grass-patch"></div>
+
+    <div id="player-container">
+        <div class="window-top">
+            <div class="window-title">music_box.exe</div>
+            <div id="secret-trigger" class="window-dots">•••</div>
+        </div>
+        
+        <div id="photo-frame">
+            <div id="image-display"></div>
+        </div>
+
+        <div id="waveform">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div id="crank-area">
+            <div id="handle">
+                <div class="handle-visual">
+                    <div class="knob-visual"></div>
+                </div>
+            </div>
+        </div>
+
+        <p class="instruction" id="status">wind clockwise to play</p>
+    </div>
+
+    <div class="carrd-tag">( made with carrd vibe )</div>
+
+    <div id="creator-panel">
+        <h3 style="margin: 0 0 15px 0; font-size: 14px; text-transform: lowercase; border-bottom: 1px solid #eee; padding-bottom: 5px;">configure memory</h3>
+        <div class="input-group">
+            <label>audio file (mp3)</label>
+            <input type="file" id="audio-input" accept="audio/*">
+        </div>
+        <div class="input-group">
+            <label>image gallery</label>
+            <input type="file" id="image-input" accept="image/*" multiple>
+        </div>
+        <button onclick="document.getElementById('creator-panel').style.display='none'">save & lock</button>
+    </div>
+
+    <script>
+        /* ALL ORIGINAL LOGIC RETAINED */
+        const handle = document.getElementById('handle');
+        const audio = new Audio();
+        const imgDisplay = document.getElementById('image-display');
+        const progressBar = document.getElementById('progress-bar');
+        const statusText = document.getElementById('status');
+        const creatorPanel = document.getElementById('creator-panel');
+
+        let images = [];
+        let isDragging = false;
+        let lastAngle = 0;
+        let rotation = 0;
+        let stopTimeout;
+
+        let tapCount = 0;
+        document.getElementById('secret-trigger').onclick = () => {
+            tapCount++;
+            if (tapCount === 4) {
+                if (prompt("Enter Passcode:") === "200908") creatorPanel.style.display = "block";
+                tapCount = 0;
+            }
+        };
+
+        function handleCrankMovement(delta) {
+            if (!audio.src) return;
+            if (audio.ended && delta > 0) audio.currentTime = 0;
+
+            if (delta > 0 && audio.currentTime < audio.duration) {
+                if (audio.paused) audio.play();
+                const speed = Math.min(Math.max(delta * 12, 0.6), 1.4);
+                audio.playbackRate = speed;
+                audio.volume = 1;
+                clearTimeout(stopTimeout);
+                statusText.innerText = "listening...";
+                stopTimeout = setTimeout(fadeAudio, 100); 
+            }
+            updateUI();
+        }
+
+        function fadeAudio() {
+            if (audio.volume > 0.1) {
+                audio.volume -= 0.1;
+                audio.playbackRate *= 0.9;
+                setTimeout(fadeAudio, 50);
+            } else {
+                audio.pause();
+                statusText.innerText = audio.ended ? "finished ✨" : "wind to continue";
+            }
+        }
+
+        function updateUI() {
+            if (!audio.duration) return;
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = progress + "%";
+            if (images.length > 0) {
+                const idx = Math.min(images.length - 1, Math.floor((audio.currentTime / audio.duration) * images.length));
+                const newImg = `url(${images[idx]})`;
+                if (imgDisplay.style.backgroundImage !== newImg) imgDisplay.style.backgroundImage = newImg;
+            }
+        }
+
+        const getAngle = (x, y) => {
+            const rect = handle.parentElement.getBoundingClientRect();
+            return Math.atan2(y - (rect.top + rect.height / 2), x - (rect.left + rect.width / 2));
+        };
+
+        const startDragging = (e) => {
+            isDragging = true;
+            const pos = e.touches ? e.touches[0] : e;
+            lastAngle = getAngle(pos.clientX, pos.clientY);
+        };
+
+        const doDragging = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const pos = e.touches ? e.touches[0] : e;
+            const currentAngle = getAngle(pos.clientX, pos.clientY);
+            let delta = currentAngle - lastAngle;
+            if (delta > Math.PI) delta -= Math.PI * 2;
+            if (delta < -Math.PI) delta += Math.PI * 2;
+            rotation += delta;
+            handle.style.transform = `rotate(${rotation}rad)`;
+            handleCrankMovement(delta);
+            lastAngle = currentAngle;
+        };
+
+        handle.addEventListener('mousedown', startDragging);
+        window.addEventListener('mousemove', doDragging);
+        window.addEventListener('mouseup', () => isDragging = false);
+        handle.addEventListener('touchstart', startDragging, {passive: false});
+        window.addEventListener('touchmove', doDragging, {passive: false});
+        window.addEventListener('touchend', () => isDragging = false);
+
+        document.getElementById('audio-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) audio.src = URL.createObjectURL(file);
+        };
+
+        document.getElementById('image-input').onchange = (e) => {
+            images = Array.from(e.target.files).map(f => URL.createObjectURL(f));
+            if (images[0]) imgDisplay.style.backgroundImage = `url(${images[0]})`;
+        };
+
+        audio.ontimeupdate = updateUI;
+    </script>
+</body>
+</html>
+
